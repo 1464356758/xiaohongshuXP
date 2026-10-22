@@ -12,6 +12,7 @@ test('health and shell accessible while data API requires login',async()=>{
  let r=await fetch(base+'/health');assert.equal(r.status,200);assert.equal((await r.json()).status,'ok');
  r=await fetch(base+'/');assert.equal(r.status,200);assert.match(await r.text(),/XP Studio/);
  r=await fetch(base+'/visual-direction.js');assert.equal(r.status,200);assert.match(await r.text(),/SHOT_PROFILES/);
+ r=await fetch(base+'/editorial-renderer.js');assert.equal(r.status,200);assert.match(await r.text(),/renderEditorialPNG/);
  r=await fetch(base+'/api/config');assert.equal(r.status,401);
 });
 test('login, cookie-based session and origin protection',async()=>{
