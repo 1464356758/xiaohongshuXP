@@ -4,6 +4,7 @@ import {readFile} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
 import path from 'node:path';
 import {newProject,applyAction,PAGE_IDS} from './lib/workflow.mjs';
+import {inspectImageDimensions} from './lib/image-dimensions.mjs';
 
 const PORT=Number(process.env.PORT||3000);
 const TOKEN=process.env.GITHUB_TOKEN||'';
@@ -147,6 +148,8 @@ async function route(req,res) {
     if(b.ext==='png'&&bytes.subarray(0,8).toString('hex')!=='89504e470d0a1a0a')throw error('PNG文件格式不符');
     if(b.ext==='jpg'&&bytes.subarray(0,3).toString('hex')!=='ffd8ff')throw error('JPG文件格式不符');
     if(b.ext==='webp'&&bytes.subarray(0,4).toString()!=='RIFF')throw error('WEBP文件格式不符');
+    const dimensions=inspectImageDimensions(bytes,b.ext);
+    if(dimensions.width!==1086||dimensions.height!==1448)throw error('仅接受1086×1448像素的最终成品图；当前为'+dimensions.width+'×'+dimensions.height);
     const filename=b.page_id+'-'+crypto.randomBytes(7).toString('hex')+'.'+b.ext;
     const asset='data/projects/'+id+'/assets/'+filename;
     await github('PUT',repo,asset,{message:'xp: upload '+filename,branch:'main',content:bytes.toString('base64')});
