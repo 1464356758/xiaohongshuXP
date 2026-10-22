@@ -203,8 +203,11 @@ document.addEventListener('click',event=>{
     if(type==='render-layout'){$('.photo-base-input[data-page="'+button.dataset.page+'"]')?.click();return;}
     if(type==='upload'){if(!$('#publicConsent')?.checked)throw new Error('图片将公开在GitHub，请先勾选知情同意');$('.upload-input[data-page="'+button.dataset.page+'"]')?.click();return;}
     if(type==='compose-prompt'){
-      const brief=buildVisualBrief(state.project,button.dataset.page);
-      const target=$('#copyForm')?.elements['visual_prompt_'+button.dataset.page];
+      const id=button.dataset.page,form=$('#copyForm');
+      const draft={...state.project,copy:{...state.project.copy,pages:state.project.copy.pages.map(pg=>
+        pg.id===id?{...pg,headline:form?.elements['headline_'+id]?.value||pg.headline,body:form?.elements['body_'+id]?.value||pg.body}:pg)}};
+      const brief=buildVisualBrief(draft,id);
+      const target=form?.elements['visual_prompt_'+id];
       if(!target)throw new Error('请打开文案编辑页');
       target.value=brief.prompt;target.focus();
       notice(button.dataset.page+' 已生成独立镜头摄影方案；商品原图和人物参考仍需人工核验');
