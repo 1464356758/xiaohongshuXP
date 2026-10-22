@@ -1,4 +1,5 @@
 import {buildVisualBrief,SHOT_PROFILES,QA_LABELS} from '/visual-direction.js';
+import {renderEditorialPNG} from '/editorial-renderer.js';
 const $ = (s,root=document)=>root.querySelector(s);
 const escapeHtml = value => String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const e = escapeHtml;
@@ -93,6 +94,9 @@ function imagePanel(p){
      '<div class="small muted" style="margin-top:9px">'+e(x.issues||'未审核')+'</div>'+
      '<form class="form" data-page="'+e(x.id)+'" id="imageForm_'+e(x.id)+'"><div class="field"><label>图片URL（https/http）</label><input name="image_url" value="'+e(x.image_url)+'" placeholder="粘贴已托管的图片地址"></div>'+
      '<button class="btn ghost sm" type="submit">保存图片链接</button></form>'+
+     '<div class="info">专业后期排版：选择已合法获得的高质量摄影底片，手机端本地加中文标题，导出1086×1448 PNG。底片中的商品必须真实，不会凭空补出商品。</div>'+
+     '<input class="hide photo-base-input" type="file" data-page="'+e(x.id)+'" accept="image/png,image/jpeg,image/webp">'+
+     '<button class="btn ghost sm" data-action="render-layout" data-page="'+e(x.id)+'">本地排版并下载 PNG</button>'+
      '<input class="hide upload-input" type="file" data-page="'+e(x.id)+'" accept="image/png,image/jpeg,image/webp">'+
      '<div class="actions"><button class="btn sm" data-action="upload" data-page="'+e(x.id)+'">选择本地图片上传</button>'+
      (x.image_url?'<a class="btn line sm" href="'+e(x.image_url)+'" target="_blank" rel="noopener noreferrer">打开原图 ↗</a>':'')+'</div></div>'
@@ -196,6 +200,7 @@ document.addEventListener('click',event=>{
     if(type==='select'){await action('SELECT_TOPIC',{id:button.dataset.id});state.tab='product';render();return;}
     if(type==='verify-product'){if(!$('#verifyConsent')?.checked)throw new Error('请先人工核验并勾选确认');await action('VERIFY_PRODUCT',{confirmed:true});state.tab='copy';render();return;}
     if(type==='finalize'){await action('FINALIZE',{});state.tab='files';render();return;}
+    if(type==='render-layout'){$('.photo-base-input[data-page="'+button.dataset.page+'"]')?.click();return;}
     if(type==='upload'){if(!$('#publicConsent')?.checked)throw new Error('图片将公开在GitHub，请先勾选知情同意');$('.upload-input[data-page="'+button.dataset.page+'"]')?.click();return;}
     if(type==='compose-prompt'){
       const brief=buildVisualBrief(state.project,button.dataset.page);
@@ -224,6 +229,17 @@ document.addEventListener('click',event=>{
 document.addEventListener('change',event=>{
   const f=event.target;
   if(f.id==='repoSelector'){withError((async()=>{state.repo=f.value;state.project=null;state.sha=null;await loadProjects();})());return;}
+  if(f.classList.contains('photo-base-input')&&f.files?.[0]){
+    withError((async()=>{
+      const project=state.project,page=project.copy.pages.find(pg=>pg.id===f.dataset.page);
+      if(!page)throw new Error('项目图片页不存在');
+      const png=await renderEditorialPNG(f.files[0],page,project.account);
+      saveBlob(project.id+'-'+page.id+'-1086x1448.png',png);
+      notice('已本地排版并导出PNG。请目视检查商品真实性、文字和裁切，再决定是否上传。');
+      f.value='';
+    })());
+    return;
+  }
   if(!f.classList.contains('upload-input')||!f.files?.[0])return;
   withError((async()=>{
     const file=f.files[0],ext=file.type==='image/jpeg'?'jpg':file.type==='image/png'?'png':file.type==='image/webp'?'webp':null;
@@ -241,6 +257,7 @@ document.addEventListener('change',event=>{
     state.project=result.project;state.sha=result.sha;render();notice('已上传图片至公开GitHub仓库');
   })());
 });
-function saveFile(name,content,type){const blob=new Blob([content],{type});const address=URL.createObjectURL(blob);
+function saveFile(name,content,type){saveBlob(name,new Blob([content],{type}));}
+function saveBlob(name,blob){const address=URL.createObjectURL(blob);
   const a=document.createElement('a');a.href=address;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(address),1000);}
 start();
