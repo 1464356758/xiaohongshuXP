@@ -1,5 +1,5 @@
 import {buildVisualBrief,SHOT_PROFILES,QA_LABELS} from '/visual-direction.js';
-import {renderEditorialPNG} from '/editorial-renderer.js';
+import {renderEditorialImage} from '/editorial-renderer.js';
 const $ = (s,root=document)=>root.querySelector(s);
 const escapeHtml = value => String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const e = escapeHtml;
@@ -96,7 +96,7 @@ function imagePanel(p){
      '<button class="btn ghost sm" type="submit">保存图片链接</button></form>'+
      '<div class="info">专业后期排版：选择已合法获得的高质量摄影底片，手机端本地加中文标题，导出1086×1448 PNG。底片中的商品必须真实，不会凭空补出商品。</div>'+
      '<input class="hide photo-base-input" type="file" data-page="'+e(x.id)+'" accept="image/png,image/jpeg,image/webp">'+
-     '<button class="btn ghost sm" data-action="render-layout" data-page="'+e(x.id)+'">本地排版并下载 PNG</button>'+
+     '<div class="actions"><button class="btn ghost sm" data-action="render-layout" data-format="jpg" data-page="'+e(x.id)+'">排版为高清JPG</button><button class="btn line sm" data-action="render-layout" data-format="png" data-page="'+e(x.id)+'">排版为无损PNG</button></div>'+
      '<input class="hide upload-input" type="file" data-page="'+e(x.id)+'" accept="image/png,image/jpeg,image/webp">'+
      '<div class="actions"><button class="btn sm" data-action="upload" data-page="'+e(x.id)+'">选择本地图片上传</button>'+
      (x.image_url?'<a class="btn line sm" href="'+e(x.image_url)+'" target="_blank" rel="noopener noreferrer">打开原图 ↗</a>':'')+'</div></div>'
@@ -200,7 +200,7 @@ document.addEventListener('click',event=>{
     if(type==='select'){await action('SELECT_TOPIC',{id:button.dataset.id});state.tab='product';render();return;}
     if(type==='verify-product'){if(!$('#verifyConsent')?.checked)throw new Error('请先人工核验并勾选确认');await action('VERIFY_PRODUCT',{confirmed:true});state.tab='copy';render();return;}
     if(type==='finalize'){await action('FINALIZE',{});state.tab='files';render();return;}
-    if(type==='render-layout'){$('.photo-base-input[data-page="'+button.dataset.page+'"]')?.click();return;}
+    if(type==='render-layout'){const input=$('.photo-base-input[data-page="'+button.dataset.page+'"]');if(input){input.dataset.format=button.dataset.format||'jpg';input.click();}return;}
     if(type==='upload'){if(!$('#publicConsent')?.checked)throw new Error('图片将公开在GitHub，请先勾选知情同意');$('.upload-input[data-page="'+button.dataset.page+'"]')?.click();return;}
     if(type==='compose-prompt'){
       const id=button.dataset.page,form=$('#copyForm');
@@ -236,9 +236,10 @@ document.addEventListener('change',event=>{
     withError((async()=>{
       const project=state.project,page=project.copy.pages.find(pg=>pg.id===f.dataset.page);
       if(!page)throw new Error('项目图片页不存在');
-      const png=await renderEditorialPNG(f.files[0],page,project.account);
-      saveBlob(project.id+'-'+page.id+'-1086x1448.png',png);
-      notice('已本地排版并导出PNG。请目视检查商品真实性、文字和裁切，再决定是否上传。');
+      const format=f.dataset.format==='png'?'png':'jpg';
+      const image=await renderEditorialImage(f.files[0],page,project.account,undefined,format);
+      saveBlob(project.id+'-'+page.id+'-1086x1448.'+format,image);
+      notice('已本地排版导出'+format.toUpperCase()+'。请目视核实商品、文字和裁切，再决定是否上传。');
       f.value='';
     })());
     return;
