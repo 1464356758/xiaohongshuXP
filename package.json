@@ -7,7 +7,7 @@
   "scripts": {
     "start": "node server.mjs",
     "dev": "node server.mjs",
-    "check": "node --check server.mjs && node --check lib/workflow.mjs && node --check public/app.js && node --check lib/visual-direction.mjs && node --check lib/editorial-renderer.mjs",
+    "check": "node --check server.mjs && node --check lib/workflow.mjs && node --check public/app.js && node --check lib/visual-direction.mjs && node --check lib/editorial-renderer.mjs && node --check lib/image-dimensions.mjs",
     "test": "node --test"
   },
   "description": "Mobile-first, human-approved editorial content workflow backed by GitHub"
