@@ -1,0 +1,14 @@
+{
+  "name": "xiaohongshu-xp-studio",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {"node": ">=22.0.0"},
+  "scripts": {
+    "start": "node server.mjs",
+    "dev": "node server.mjs",
+    "check": "node --check server.mjs && node --check lib/workflow.mjs && node --check public/app.js",
+    "test": "node --test"
+  },
+  "description": "Mobile-first, human-approved editorial content workflow backed by GitHub"
+}
