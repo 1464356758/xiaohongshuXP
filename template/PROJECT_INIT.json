@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "template_name": "小红书专业美妆创作母版 XP-001",
+  "platform": "小红书",
+  "default_account": "晚梨",
+  "persona_anchor": {
+    "name": "PERSONA-001",
+    "mole": "右颧骨小痣（依原始非镜像参考）",
+    "no_mirror": true,
+    "asset_policy": "仅用授权的人物参考，不向公开仓库上传隐私素材"
+  },
+  "post_format": {
+    "type": "图文",
+    "pages": 5,
+    "width": 1086,
+    "height": 1448,
+    "aspect_ratio": "3:4",
+    "export": [
+      "PNG",
+      "标题",
+      "正文",
+      "话题标签"
+    ]
+  },
+  "editorial_gates": [
+    "候选选题5-10个",
+    "产品全称及色号/规格核验",
+    "原创5页文案",
+    "真实商品图和人物锚点",
+    "5/5图片审核",
+    "最终人工批准发布"
+  ],
+  "audit_policy": {
+    "max_repair_rounds": 3,
+    "fail_on": [
+      "未经核实的商品宣称",
+      "人物镜像/面部漂移",
+      "商品包装/色号错误",
+      "中文错字或遮挡",
+      "非授权素材"
+    ]
+  },
+  "provider_policy": {
+    "llm_requests_per_writing_stage": 1,
+    "llm_requests_per_audit_stage": 1,
+    "retries": "必须用户确认后显式执行",
+    "api_key_storage": "server_side_only"
+  },
+  "notes": "仅用于初始化约定；具体新项目由移动端工作台创建并写入 data/projects"
+}
