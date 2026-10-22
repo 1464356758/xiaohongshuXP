@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newProject,applyAction,PAGE_IDS,isUrl} from '../lib/workflow.mjs';
+import {CRITICAL_QA_KEYS,VISUAL_STANDARD_VERSION} from '../lib/visual-direction.mjs';
+const approvedChecklist=()=>Object.fromEntries(CRITICAL_QA_KEYS.map(k=>[k,true]));
 const now='2026-10-22T12:00:00.000Z';
 function act(p,action,payload){return applyAction(p,action,payload,now);}
 function topicAndProduct(){
@@ -37,7 +39,7 @@ test('five independent reviews unlock export and edits reset changed page',()=>{
  let p=withContent(topicAndProduct());
  for(const id of PAGE_IDS){
   p=act(p,'SET_IMAGE',{page_id:id,url:'https://example.com/'+id+'.png'});
-  p=act(p,'REVIEW_PAGE',{page_id:id,verdict:'PASS'});
+  p=act(p,'REVIEW_PAGE',{page_id:id,verdict:'PASS',checklist:approvedChecklist()});
  }
  assert.equal(p.copy.pages.filter(x=>x.status==='PASS').length,5);
  p=act(p,'FINALIZE',{});assert.equal(p.stage,'READY_TO_EXPORT');
@@ -61,4 +63,26 @@ test('invalid URLs are blocked',()=>{
  assert.equal(isUrl('https://example.org/path'),true);
  let p=withContent(topicAndProduct());
  assert.throws(()=>act(p,'SET_IMAGE',{page_id:'P01',url:'javascript:alert(1)'}),/网址/);
+});
+
+test('visual PASS is impossible without all eight deliberate confirmations',()=>{
+ let p=withContent(topicAndProduct());
+ p=act(p,'SET_IMAGE',{page_id:'P01',url:'https://example.com/p1.png'});
+ assert.throws(()=>act(p,'REVIEW_PAGE',{page_id:'P01',verdict:'PASS'}),/八个/);
+ const partial=approvedChecklist();partial.typography=false;
+ assert.throws(()=>act(p,'REVIEW_PAGE',{page_id:'P01',verdict:'PASS',checklist:partial}),/八个/);
+ p=act(p,'REVIEW_PAGE',{page_id:'P01',verdict:'PASS',checklist:approvedChecklist()});
+ assert.equal(p.copy.pages[0].last_review.version,VISUAL_STANDARD_VERSION);
+ p=act(p,'SET_IMAGE',{page_id:'P01',url:'https://example.com/new.png'});
+ assert.equal(p.copy.pages[0].last_review,null);
+});
+test('choosing a different topic clears all prior SKU, copy and image approvals',()=>{
+ let p=withContent(topicAndProduct());
+ p=act(p,'SET_IMAGE',{page_id:'P01',url:'https://example.com/a.png'});
+ p=act(p,'REVIEW_PAGE',{page_id:'P01',verdict:'PASS',checklist:approvedChecklist()});
+ p=act(p,'ADD_TOPIC',{title:'另一个产品'});
+ p=act(p,'SELECT_TOPIC',{id:p.candidates[1].id});
+ assert.equal(p.product.name,'');assert.equal(p.copy.title,'');
+ assert.equal(p.copy.pages[0].status,'PENDING');
+ assert.equal(p.copy.pages[0].image_url,'');
 });
