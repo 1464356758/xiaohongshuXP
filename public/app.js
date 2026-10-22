@@ -1,3 +1,4 @@
+import {buildVisualBrief,SHOT_PROFILES,QA_LABELS} from '/visual-direction.js';
 const $ = (s,root=document)=>root.querySelector(s);
 const escapeHtml = value => String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const e = escapeHtml;
@@ -71,13 +72,13 @@ function productPanel(p){
 }
 function copyPanel(p){
   const cards=p.copy.pages.map(x=>
-    '<div class="page-card"><div class="page-header"><strong>'+e(x.id)+' · 第'+e(Number(x.id.slice(1)))+'页</strong>'+stageBadge(x.status)+'</div>'+
+    '<div class="page-card"><div class="page-header"><strong>'+e(x.id)+' · '+e(SHOT_PROFILES[x.id].name)+'</strong>'+stageBadge(x.status)+'</div>'+
     input('headline_'+x.id,'页内主标题',x.headline)+area('body_'+x.id,'页内文案',x.body,4)+
     area('visual_prompt_'+x.id,'视觉指令 / 镜头设计',x.visual_prompt,5)+
     '<div class="actions"><button type="button" class="btn ghost sm" data-action="compose-prompt" data-page="'+e(x.id)+'">生成专业视觉指令</button>'+
     '<button type="button" class="btn line sm" data-action="copy-prompt" data-page="'+e(x.id)+'">复制本页指令</button></div></div>'
   ).join('');
-  return section('内容策划与五页分镜','每一页写清楚内容和画面职责。保存文案变更后，变动页会重新进入审核。')+
+  return section('内容策划与五页分镜','五页使用五种不同镜头语言；先摄影底片、真实素材合成，最后后期精确排版。不让模型一次生成带中文字的完整海报。')+
     '<div class="card"><form class="form" id="copyForm">'+input('title','发布标题',p.copy.title,'输入最终发布标题',true)+
     area('caption','正文',p.copy.caption,6)+input('tags','话题标签',p.copy.tags,'#美妆 #口红')+
     '<div class="page-grid">'+cards+'</div>'+formButton('保存整套五页文案')+'</form></div>';
@@ -88,7 +89,7 @@ function imagePanel(p){
    '<div class="info important">重要：当前 GitHub 仓库是公开仓库。上传文件会公开给所有人。真实人物锚点照片、商业未公开素材或敏感照片不要上传到此仓库。</div>'+
    '<label class="checkbox"><input type="checkbox" id="publicConsent">我明确知晓并同意：本次上传的图片会公开保存在 GitHub。</label>'+
    '<div class="page-grid">'+p.copy.pages.map(x=>
-     '<div class="page-card"><div class="page-header"><strong>'+e(x.id)+' · '+e(x.headline||'待补充分镜')+'</strong>'+stageBadge(x.status)+'</div>'+thumb(x)+
+     '<div class="page-card"><div class="page-header"><strong>'+e(x.id)+' · '+e(SHOT_PROFILES[x.id].name)+'</strong>'+stageBadge(x.status)+'</div>'+thumb(x)+
      '<div class="small muted" style="margin-top:9px">'+e(x.issues||'未审核')+'</div>'+
      '<form class="form" data-page="'+e(x.id)+'" id="imageForm_'+e(x.id)+'"><div class="field"><label>图片URL（https/http）</label><input name="image_url" value="'+e(x.image_url)+'" placeholder="粘贴已托管的图片地址"></div>'+
      '<button class="btn ghost sm" type="submit">保存图片链接</button></form>'+
@@ -104,13 +105,13 @@ function reviewPanel(p){
     '<div class="kpi"><strong>'+p.copy.pages.filter(x=>x.status==='BLOCKED').length+'</strong><span>人工阻塞</span></div>'+
     '<div class="kpi"><strong>'+e(p.revision)+'</strong><span>当前状态版本</span></div></div>'+
     '<div class="page-grid" style="margin-top:16px">'+p.copy.pages.map(x=>
-    '<div class="page-card"><div class="page-header"><strong>'+e(x.id)+'</strong>'+stageBadge(x.status)+'</div>'+thumb(x)+
+    '<div class="page-card"><div class="page-header"><strong>'+e(x.id)+' · '+e(SHOT_PROFILES[x.id].name)+'</strong>'+stageBadge(x.status)+'</div>'+thumb(x)+
     '<div class="small muted" style="margin:10px 0">返修记录：'+e(x.repair_rounds)+'/3轮</div>'+
     '<div class="small">'+e(x.headline||'未写标题')+'</div>'+
     (x.status==='BLOCKED'?
       '<form class="form" id="manualForm_'+e(x.id)+'" data-page="'+e(x.id)+'">'+area('reason','人工裁决理由',x.issues,3)+formButton('解除阻塞并重新审核')+'</form>':
       '<form class="form" id="reviewForm_'+e(x.id)+'" data-page="'+e(x.id)+'"><div class="field"><label>审核结论</label><select name="verdict"><option value="PASS">PASS｜通过</option><option value="REWORK">REWORK｜局部返修</option></select></div>'+
-      area('issues','具体问题 / 通过依据',x.issues,3)+formButton('保存 '+x.id+' 审核')+'</form>')+'</div>'
+      '<div class="info">PASS须手动确认下列8项。没有商品或人物参考时，不能当作已核实。</div>'+      '<div class="form">'+Object.entries(QA_LABELS).map(([key,label])=>'<label class="checkbox"><input type="checkbox" name="qa_'+e(key)+'"'+(x.last_review?.verdict==='PASS'?' checked':'')+'>'+e(label)+'</label>').join('')+'</div>'+      area('issues','具体问题 / 通过依据',x.issues,3)+formButton('保存 '+x.id+' 审核')+'</form>')+'</div>'
    ).join('')+'</div><div class="card" style="margin-top:16px"><h3>整套最终验收</h3><p class="muted">需已核验商品、有效发布标题，以及 5 / 5 页面状态PASS。</p>'+
    '<div class="actions"><button class="btn" data-action="finalize">确认最终通过并锁定交付 →</button><button class="btn ghost" data-action="tab" data-tab="files">查看导出</button></div></div>';
 }
@@ -180,7 +181,7 @@ document.addEventListener('submit',event=>{
     if(f.id==='copyForm'){const d=getForm(f);const pages=PAGE_IDS.map(id=>({id,headline:d['headline_'+id],body:d['body_'+id],visual_prompt:d['visual_prompt_'+id]}));
       await action('SAVE_COPY',{title:d.title,caption:d.caption,tags:d.tags,pages});return;}
     if(f.id.startsWith('imageForm_')){await action('SET_IMAGE',{page_id:f.dataset.page,url:f.elements.image_url.value});return;}
-    if(f.id.startsWith('reviewForm_')){await action('REVIEW_PAGE',{page_id:f.dataset.page,...getForm(f)});return;}
+    if(f.id.startsWith('reviewForm_')){const data=getForm(f);const checklist=Object.fromEntries(Object.keys(QA_LABELS).map(k=>[k,!!f.elements['qa_'+k]?.checked]));await action('REVIEW_PAGE',{page_id:f.dataset.page,...data,checklist});return;}
     if(f.id.startsWith('manualForm_')){await action('MANUAL_RESOLVE',{page_id:f.dataset.page,...getForm(f)});return;}
   })());
 });
@@ -197,25 +198,12 @@ document.addEventListener('click',event=>{
     if(type==='finalize'){await action('FINALIZE',{});state.tab='files';render();return;}
     if(type==='upload'){if(!$('#publicConsent')?.checked)throw new Error('图片将公开在GitHub，请先勾选知情同意');$('.upload-input[data-page="'+button.dataset.page+'"]')?.click();return;}
     if(type==='compose-prompt'){
-      const p=state.project,form=$('#copyForm'),id=button.dataset.page,pg=p.copy.pages.find(x=>x.id===id);
-      const title=form?.elements['headline_'+id]?.value||pg.headline;
-      const body=form?.elements['body_'+id]?.value||pg.body;
-      const product=p.product;
-      const prompt=['【小红书专业美妆摄影制作指令】',
-        '作品类型：原创美妆图文第'+id.slice(1)+'页，尺寸1086×1448像素，3:4竖屏，写实商业摄影质感。',
-        '本页标题：'+title,'画面要表达的真实信息：'+body,
-        '品牌和商品：'+product.brand+' '+product.name+' '+product.shade+' '+product.spec,
-        '商品身份约束：严格依据经过核验的真实实物参考图制作，不允许虚构包装、色号、Logo或任意文字；没有参考图时不要凭空补造。',
-        '人物身份锚点：'+p.persona.name+'。'+p.persona.rules+'；只有在实际提供获授权的人物参考图时才制作可辨识的人物一致性。',
-        '摄影审美：高端但自然的化妆品静物与人物摄影，真实环境光、可信皮肤纹理、不过度柔焦，不浮夸HDR。色彩以产品系列与主题为准。',
-        '版式结构：每页只安排一个清晰重点，主标题有足够留白，重要文字在安全区域，中文排版由后期可编辑文字图层完成，不依赖模型乱写字。',
-        '构图质量：主体不切断、背景干净、真实比例和透视、手部结构合理；连续五页应有统一光影和色调，但镜头不机械重复。',
-        '严禁：无依据的使用体验和功效宣称、错误色号、虚假商品包装、重复镜像脸、错别字、水印、杂乱贴纸、伪造拍摄或用户体验事实。',
-        '交付前检查：真实产品身份、页面关联、人物不镜像、小痣方向、尺寸、拼写、画面层级、过度美化、图文一致性。',
-        '当前提示词仅为草稿；需要结合真实上传参考图与人工审稿后才算可用。'
-      ].join('\n\n');
-      const target=form?.elements['visual_prompt_'+id];if(!target)throw new Error('请先打开文案编辑页');
-      target.value=prompt;target.focus();notice(id+' 视觉指令已生成，请检查后保存');return;
+      const brief=buildVisualBrief(state.project,button.dataset.page);
+      const target=$('#copyForm')?.elements['visual_prompt_'+button.dataset.page];
+      if(!target)throw new Error('请打开文案编辑页');
+      target.value=brief.prompt;target.focus();
+      notice(button.dataset.page+' 已生成独立镜头摄影方案；商品原图和人物参考仍需人工核验');
+      return;
     }
     if(type==='copy-prompt'){
       const target=$('#copyForm')?.elements['visual_prompt_'+button.dataset.page];
@@ -241,6 +229,10 @@ document.addEventListener('change',event=>{
     const file=f.files[0],ext=file.type==='image/jpeg'?'jpg':file.type==='image/png'?'png':file.type==='image/webp'?'webp':null;
     if(!ext)throw new Error('仅支持 JPG、PNG 或 WebP');
     if(file.size>3_000_000)throw new Error('图片不能超过3 MB');
+    const bitmap=await createImageBitmap(file);
+    const width=bitmap.width,height=bitmap.height;
+    bitmap.close();
+    if(width!==1086||height!==1448)throw new Error('成品必须1086×1448像素（3:4）；当前'+width+'×'+height+'。请先导出正确画幅。');
     const base64=await new Promise((resolve,reject)=>{
       const reader=new FileReader();reader.onload=()=>resolve(String(reader.result).split(',')[1]);reader.onerror=()=>reject(new Error('图片读取失败'));reader.readAsDataURL(file);
     });
