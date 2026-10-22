@@ -73,7 +73,9 @@ function copyPanel(p){
   const cards=p.copy.pages.map(x=>
     '<div class="page-card"><div class="page-header"><strong>'+e(x.id)+' · 第'+e(Number(x.id.slice(1)))+'页</strong>'+stageBadge(x.status)+'</div>'+
     input('headline_'+x.id,'页内主标题',x.headline)+area('body_'+x.id,'页内文案',x.body,4)+
-    area('visual_prompt_'+x.id,'视觉指令 / 镜头设计',x.visual_prompt,5)+'</div>'
+    area('visual_prompt_'+x.id,'视觉指令 / 镜头设计',x.visual_prompt,5)+
+    '<div class="actions"><button type="button" class="btn ghost sm" data-action="compose-prompt" data-page="'+e(x.id)+'">生成专业视觉指令</button>'+
+    '<button type="button" class="btn line sm" data-action="copy-prompt" data-page="'+e(x.id)+'">复制本页指令</button></div></div>'
   ).join('');
   return section('内容策划与五页分镜','每一页写清楚内容和画面职责。保存文案变更后，变动页会重新进入审核。')+
     '<div class="card"><form class="form" id="copyForm">'+input('title','发布标题',p.copy.title,'输入最终发布标题',true)+
@@ -194,6 +196,32 @@ document.addEventListener('click',event=>{
     if(type==='verify-product'){if(!$('#verifyConsent')?.checked)throw new Error('请先人工核验并勾选确认');await action('VERIFY_PRODUCT',{confirmed:true});state.tab='copy';render();return;}
     if(type==='finalize'){await action('FINALIZE',{});state.tab='files';render();return;}
     if(type==='upload'){if(!$('#publicConsent')?.checked)throw new Error('图片将公开在GitHub，请先勾选知情同意');$('.upload-input[data-page="'+button.dataset.page+'"]')?.click();return;}
+    if(type==='compose-prompt'){
+      const p=state.project,form=$('#copyForm'),id=button.dataset.page,pg=p.copy.pages.find(x=>x.id===id);
+      const title=form?.elements['headline_'+id]?.value||pg.headline;
+      const body=form?.elements['body_'+id]?.value||pg.body;
+      const product=p.product;
+      const prompt=['【小红书专业美妆摄影制作指令】',
+        '作品类型：原创美妆图文第'+id.slice(1)+'页，尺寸1086×1448像素，3:4竖屏，写实商业摄影质感。',
+        '本页标题：'+title,'画面要表达的真实信息：'+body,
+        '品牌和商品：'+product.brand+' '+product.name+' '+product.shade+' '+product.spec,
+        '商品身份约束：严格依据经过核验的真实实物参考图制作，不允许虚构包装、色号、Logo或任意文字；没有参考图时不要凭空补造。',
+        '人物身份锚点：'+p.persona.name+'。'+p.persona.rules+'；只有在实际提供获授权的人物参考图时才制作可辨识的人物一致性。',
+        '摄影审美：高端但自然的化妆品静物与人物摄影，真实环境光、可信皮肤纹理、不过度柔焦，不浮夸HDR。色彩以产品系列与主题为准。',
+        '版式结构：每页只安排一个清晰重点，主标题有足够留白，重要文字在安全区域，中文排版由后期可编辑文字图层完成，不依赖模型乱写字。',
+        '构图质量：主体不切断、背景干净、真实比例和透视、手部结构合理；连续五页应有统一光影和色调，但镜头不机械重复。',
+        '严禁：无依据的使用体验和功效宣称、错误色号、虚假商品包装、重复镜像脸、错别字、水印、杂乱贴纸、伪造拍摄或用户体验事实。',
+        '交付前检查：真实产品身份、页面关联、人物不镜像、小痣方向、尺寸、拼写、画面层级、过度美化、图文一致性。',
+        '当前提示词仅为草稿；需要结合真实上传参考图与人工审稿后才算可用。'
+      ].join('\n\n');
+      const target=form?.elements['visual_prompt_'+id];if(!target)throw new Error('请先打开文案编辑页');
+      target.value=prompt;target.focus();notice(id+' 视觉指令已生成，请检查后保存');return;
+    }
+    if(type==='copy-prompt'){
+      const target=$('#copyForm')?.elements['visual_prompt_'+button.dataset.page];
+      if(!target?.value.trim())throw new Error('本页没有提示词，先生成或输入');
+      await navigator.clipboard.writeText(target.value);notice('本页视觉指令已复制');return;
+    }
     if(type==='copy-caption'){const p=state.project;
       await navigator.clipboard.writeText([p.copy.title,p.copy.caption,p.copy.tags].filter(Boolean).join('\n\n'));notice('文案已复制');return;}
     if(type==='export-json'){saveFile(state.project.id+'.json',JSON.stringify(state.project,null,2),'application/json');return;}
