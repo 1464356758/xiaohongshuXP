@@ -83,7 +83,7 @@ async function listProjects(repo) {
   }
   return results.sort((a,b)=>String(b.updated_at).localeCompare(String(a.updated_at)));
 }
-const paths={'/':'index.html','/index.html':'index.html','/app.js':'app.js','/visual-direction.js':'../lib/visual-direction.mjs','/styles.css':'styles.css','/favicon.svg':'favicon.svg'};
+const paths={'/':'index.html','/index.html':'index.html','/app.js':'app.js','/visual-direction.js':'../lib/visual-direction.mjs','/editorial-renderer.js':'../lib/editorial-renderer.mjs','/styles.css':'styles.css','/favicon.svg':'favicon.svg'};
 const types={html:'text/html; charset=utf-8',js:'text/javascript; charset=utf-8',mjs:'text/javascript; charset=utf-8',css:'text/css; charset=utf-8',svg:'image/svg+xml'};
 async function serve(res,url) {
   const filename=paths[url.pathname];if(!filename){res.writeHead(404);res.end('Not found');return;}
