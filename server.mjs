@@ -47,7 +47,8 @@ async function github(method,repo,asset,data) {
   try{response=await fetch(ghUrl(repo,asset),{method,headers,...(data!==undefined?{body:JSON.stringify(data)}:{})});}
   catch{throw error('GitHub网络连接失败，请检查服务部署网络',503);}
   if(!response.ok){
-    if(response.status===404)return {missing:true};
+    if(response.status===404&&method==='GET')return {missing:true};
+    if(response.status===404)throw error('GitHub目标仓库或分支不可写，请检查授权与分支',502);
     if(response.status===409||response.status===422)throw error('GitHub版本发生冲突，请刷新后重试',409);
     if(response.status===403||response.status===429)throw error('GitHub限流或写入权限不足',503);
     if(response.status===401)throw error('GitHub访问令牌无效',503);
