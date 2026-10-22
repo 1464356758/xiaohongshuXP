@@ -46,5 +46,28 @@
     "retries": "必须用户确认后显式执行",
     "api_key_storage": "server_side_only"
   },
-  "notes": "仅用于初始化约定；具体新项目由移动端工作台创建并写入 data/projects"
+  "notes": "仅用于初始化约定；具体新项目由移动端工作台创建并写入 data/projects",
+  "visual_production_v02": {
+    "five_shots": [
+      "EDITORIAL_HERO",
+      "TRUE_PRODUCT_PACKSHOT",
+      "MATERIAL_IN_USE",
+      "EVIDENCE_EDITORIAL",
+      "CLOSING_STILL_LIFE"
+    ],
+    "methods": [
+      "真实SKU图片核验",
+      "每页独立摄影底片",
+      "准确商品资产合成（待开发自动化）",
+      "中文可编辑文字后期",
+      "8项人工审稿"
+    ],
+    "final_canvas_px": {
+      "width": 1086,
+      "height": 1448
+    },
+    "ai_handling": "模型不负责重画商品包装、Logo和中文；无精确授权商品资产仅可做底片",
+    "quality_gate": "八项人工确认全部通过才能PASS",
+    "note": "当前仅有本地中文排版工具，并无AI图片生成或独立智能抠图能力"
+  }
 }
