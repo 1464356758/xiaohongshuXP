@@ -1,14 +1,14 @@
-# xiaohongshuXP | XP Studio v0.1
+# xiaohongshuXP | XP Studio v0.2（专业视觉流程）
 
 > 专业的小红书美妆图文创作工作台，手机端优先，GitHub 项目状态可追踪，人工审核把关。
 
 ## 当前真实状态（2026-10-22）
 
-**软件源代码已落仓：MVP_CODE_WRITTEN / DEPLOYMENT_PENDING / LIVE_GITHUB_INTEGRATION_UNTESTED**
+**软件代码已写入：V0.2_VISUAL_CODE_WRITTEN / DEPLOYMENT_PENDING / LIVE_GITHUB_INTEGRATION_UNTESTED**
 
-已完成：纯 Node.js 22 服务端 API、管理员登录、手机端内容工作台、GitHub Contents API 读写、项目初始化、选题和商品核验、5页文案与视觉提示词、图片 URL 与明确同意后上传、逐页审核及最多三轮返修、GitHub版本SHA冲突控制、TXT/JSON导出、基础测试脚本。
+已完成：Node 22 API、手机端工作台、GitHub版本化读写接口、项目/选题/商品核验/5页文案、按页独立专业摄影指令、手机端本地5种中文后期排版PNG输出、1086×1448上传尺寸检查、八项人工视觉审核及最多三轮返修、SHA冲突控制、TXT/JSON导出和自动测试。
 
-仍需完成：GitHub Actions 或本地真实 Node 22 测试执行、使用专用 GitHub Token 的真实写入回读验收、Railway/其他平台部署、正式 AI 文案/生图接口、自动排版质检与ZIP导出。本仓库不包含“已经上线”的证明。
+仍需完成：V0.2最新版CI结果确认、专用GitHub Token真实端到端写入验收、Railway/其他平台部署、正式AI文案与生图/编辑接口、实物图自动抠图及合成、自动视觉识别质检与ZIP导出。本仓库不包含“已经上线”的证明。
 
 **不要把 `.env` 中的管理员密码、PAT、Session Secret 提交到 GitHub。** 软件不会从 ChatGPT GitHub 连接自动得到密钥。
 
@@ -26,13 +26,22 @@ node --env-file=.env server.mjs
 
 具体操作、权限范围、线上部署要求与测试说明请阅读：[XP Studio v0.1 部署和验收](docs/XP-V0.1-部署与验收.md)。
 
+## 视觉质量升级
+
+- [V0.2专业生图、真实商品保真、分层排版与8项审核标准](docs/XP-V0.2-专业生图与排版标准.md)
+- [专业镜头与差异化五页视觉指令模块](lib/visual-direction.mjs)
+- [本地1086×1448五版式中文后期PNG渲染模块](lib/editorial-renderer.mjs)
+- [服务端图片尺寸检查](lib/image-dimensions.mjs)
+
+**重要：V0.2不能自己调用图像模型生成照片。** 工作台现在负责分镜、提示词、已有摄影底片的文字排版及审核；真实商品原图、授权人像参考与摄影底片仍需要从外部获得。
+
 ## 使用流程
 
 ```text
 创建项目 → 添加5～10个真实选题 → 人工选定一个
 → 核验品牌/色号/规格/官方来源
 → 编辑5页原创文案/分镜 → 生成每页视觉提示词草稿
-→ 关联合法图片链接或同意公开上传
+→ 先用外部模型获得摄影底片 → 手机端本地后期排版输出PNG → 同意后上传真实成品
 → 每页人工PASS/REWORK → 三轮阻塞由人裁决
 → 5/5 PASS → 正文复制和TXT/JSON交付
 ```
